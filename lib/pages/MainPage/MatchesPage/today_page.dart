@@ -1,35 +1,61 @@
 import 'package:flutter/material.dart';
+import 'package:savage_football/models/head_to_head_model.dart';
 import 'package:savage_football/utils/theme.dart';
 
 class TodayPage extends StatefulWidget {
-  const TodayPage({Key? key}) : super(key: key);
+  final Map<String, List<Response>> leagueMap;
+  const TodayPage({
+    Key? key,
+    required this.leagueMap,
+  }) : super(key: key);
 
   @override
   State<TodayPage> createState() => _TodayPageState();
 }
 
 class _TodayPageState extends State<TodayPage> {
-  bool isMatch = true;
-  List isMatches = [true];
+  List isMatches = [false];
+  List<String> keys = [];
+
   @override
   Widget build(BuildContext context) {
+    for (var i = 0; i < widget.leagueMap.length; i++) {
+      isMatches.add(false);
+    }
+    widget.leagueMap.forEach(
+      (key, value) {
+        keys.add(key);
+      },
+    );
     return SingleChildScrollView(
       child: Column(
-        children: [
-          LeagueTile(isMatches: isMatches),
-        ],
+        children: List.generate(widget.leagueMap.length, (index) {
+          return LeagueTile(
+            leagueLogo: widget.leagueMap[keys[index]]![0].league!.logo!,
+            leagueName: keys[index],
+            isMatches: isMatches,
+            leagueList: widget.leagueMap[keys[index]],
+          );
+        }),
       ),
     );
   }
 }
 
+// !
+// !
+// !
 class LeagueTile extends StatefulWidget {
+  final List<dynamic>? leagueList;
+  final List isMatches;
+  final String leagueName;
+  final String leagueLogo;
   const LeagueTile({
     Key? key,
     required this.isMatches,
+    required this.leagueList,
+    required this.leagueName, required this.leagueLogo,
   }) : super(key: key);
-
-  final List isMatches;
 
   @override
   State<LeagueTile> createState() => _LeagueTileState();
@@ -59,13 +85,15 @@ class _LeagueTileState extends State<LeagueTile> {
                       Row(
                         children: [
                           CircleAvatar(
+                            backgroundColor: Colors.transparent,
                             radius: 15,
+                            child: Image.network(widget.leagueLogo),
                           ),
                           SizedBox(
                             width: 20,
                           ),
                           Text(
-                            'UEFA Nations League A',
+                            widget.leagueName,
                             style: subHeadingStyle,
                           ),
                         ],
@@ -74,22 +102,20 @@ class _LeagueTileState extends State<LeagueTile> {
                   );
                 }),
                 body: Column(
-                  children: [
-                    Divider(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                    MatchWidget(),
-                  ],
+                  children: List.generate(widget.leagueList!.length, (index) {
+                    return index == 0
+                        ? Column(
+                            children: [
+                              Divider(),
+                              MatchWidget(
+                                data: widget.leagueList![index],
+                              )
+                            ],
+                          )
+                        : MatchWidget(
+                            data: widget.leagueList![index],
+                          );
+                  }),
                 ),
                 isExpanded: widget.isMatches[0])
           ],
@@ -103,8 +129,10 @@ class _LeagueTileState extends State<LeagueTile> {
 }
 
 class MatchWidget extends StatelessWidget {
+  final Response data;
   const MatchWidget({
     Key? key,
+    required this.data,
   }) : super(key: key);
 
   @override
@@ -124,7 +152,7 @@ class MatchWidget extends StatelessWidget {
                       alignment: Alignment.centerRight,
                       width: 110,
                       child: Text(
-                        'Portugal',
+                        data.teams!.home!.name!,
                         overflow: TextOverflow.visible,
                       )),
                   SizedBox(
@@ -138,19 +166,23 @@ class MatchWidget extends StatelessWidget {
               mainAxisAlignment: MainAxisAlignment.center,
               children: [
                 CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Image.network(data.teams!.home!.logo!),
                   radius: 15,
                 ),
                 SizedBox(
                   width: 10,
                 ),
                 Text(
-                  '2 - 0',
+                  '${data.goals!.home ?? "#"} - ${data.goals!.away ?? "#"}',
                   style: subHeadingStyle,
                 ),
                 SizedBox(
                   width: 10,
                 ),
-                CircleAvatar(
+               CircleAvatar(
+                  backgroundColor: Colors.transparent,
+                  child: Image.network(data.teams!.away!.logo!),
                   radius: 15,
                 ),
               ],
@@ -167,7 +199,7 @@ class MatchWidget extends StatelessWidget {
                   Container(
                     width: 110,
                     child: Text(
-                      'Czech Republic',
+                      data.teams!.away!.name!,
                       overflow: TextOverflow.visible,
                     ),
                   ),

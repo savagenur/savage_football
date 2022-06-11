@@ -1,13 +1,22 @@
 import 'package:flutter/gestures.dart';
+import 'package:flutter_native_timezone/flutter_native_timezone.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter_svg/svg.dart';
+import 'package:intl/intl.dart';
+import 'package:savage_football/apis/head_to_head_api.dart';
+import 'package:savage_football/main.dart';
+import 'package:savage_football/models/head_to_head_model.dart';
 import 'package:savage_football/pages/MainPage/MatchesPage/today_page.dart';
 import 'package:savage_football/pages/MainPage/MatchesPage/tomorrow_page.dart';
 import 'package:savage_football/pages/MainPage/MatchesPage/yerterday_page.dart';
 import 'package:savage_football/utils/theme.dart';
 
 class MatchesPage extends StatefulWidget {
-  const MatchesPage({Key? key}) : super(key: key);
+  final HTHModel data;
+  const MatchesPage({
+    Key? key,
+    required this.data,
+  }) : super(key: key);
 
   @override
   State<MatchesPage> createState() => _MatchesPageState();
@@ -15,12 +24,10 @@ class MatchesPage extends StatefulWidget {
 
 class _MatchesPageState extends State<MatchesPage>
     with SingleTickerProviderStateMixin {
+  Map<String, List<Response>> sortedByLeague = {};
+
   int currentIndex = 1;
-  List<Widget> pages = [
-    YesterdayPage(),
-    TodayPage(),
-    TomorrowPage(),
-  ];
+
   List<Widget> tabs = [
     Tab(
       text: 'Yesterday',
@@ -36,6 +43,9 @@ class _MatchesPageState extends State<MatchesPage>
 
   @override
   void initState() {
+    createList(widget.data);
+    addList(widget.data);
+    print(sortedByLeague);
     tabController =
         TabController(length: tabs.length, vsync: this, initialIndex: 1);
     super.initState();
@@ -43,6 +53,13 @@ class _MatchesPageState extends State<MatchesPage>
 
   @override
   Widget build(BuildContext context) {
+    List<Widget> pages = [
+      YesterdayPage(),
+      TodayPage(
+        leagueMap: sortedByLeague,
+      ),
+      TomorrowPage(),
+    ];
     return Scaffold(
       body: DefaultTabController(
         length: tabs.length,
@@ -77,7 +94,7 @@ class _MatchesPageState extends State<MatchesPage>
           SizedBox(
             width: 30,
           ),
-          Icon(Icons.search),
+          GestureDetector(onTap: () async {}, child: Icon(Icons.search)),
           SizedBox(
             width: 20,
           ),
@@ -103,5 +120,19 @@ class _MatchesPageState extends State<MatchesPage>
               controller: tabController,
               tabs: tabs),
         ));
+  }
+
+  void createList(HTHModel data) {
+    for (var i = 0; i < data.response!.length; i++) {
+        if (!sortedByLeague.containsKey(data.response![i].league!.name!)) {
+          sortedByLeague.addAll({data.response![i].league!.name!: []});
+        } else {}
+      }
+  }
+
+  void addList(HTHModel data) {
+    for (var i = 0; i < data.response!.length; i++) {
+        sortedByLeague[data.response![i].league!.name!]?.add(data.response![i]);
+      }
   }
 }
